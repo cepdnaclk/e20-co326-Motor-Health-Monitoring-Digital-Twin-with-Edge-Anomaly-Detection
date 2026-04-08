@@ -1,1 +1,20 @@
+docker/.env# Environment secrets
 docker/.env
+*.env
+
+# Mosquitto generated files
+docker/config/passwd
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor
+.vscode/
+.idea/
+*.swp
