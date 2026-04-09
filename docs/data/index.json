@@ -28,5 +28,5 @@
             "email": "kamalanath@eng.pdn.ac.lk"
         }
     ],
-    "tags": ["DigitalTwin", "Grafana", "IIOT", "TinyML", "ESP32","NodeRed","InfluxDB","IndustrialSystems","Automation","SCADA","Monitoring"],
+    "tags": ["DigitalTwin", "Grafana", "IIOT", "TinyML", "ESP32","NodeRed","InfluxDB","IndustrialSystems","Automation","SCADA","Monitoring"]
 }
