@@ -41,13 +41,14 @@ title: Motor Health Monitoring Digital Twin with Edge Anomaly Detection
 
 ## Introduction
 
-This project implements an Industrial IoT digital twin for motor health monitoring using a 4-layer edge-to-cloud architecture. The core objective is to detect early-stage motor bearing faults, imbalance, and abnormal behavior using edge-level anomaly detection while enabling cloud-based analytics and decision support.
+This project implements an Industrial IoT digital twin for motor health monitoring using a 4-layer edge-to-cloud architecture. The core objective is to detect motor overheating, thermal runaway, and cooling failure using edge-level temperature analytics and cloud-based thermal trend analysis.
 
 ## System Overview
 
 The implementation uses the following technology stack:
 
-- Edge Device: ESP32-S3 (firmware layer)
+- Edge Data Source (current): Python mock temperature publisher
+- Edge Device (future phase): ESP32-S3 firmware layer
 - Message Broker: Eclipse Mosquitto (MQTT + Sparkplug B)
 - Flow Logic: Node-RED
 - Historian: InfluxDB

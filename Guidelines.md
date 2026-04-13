@@ -4,12 +4,13 @@
 
 This project implements an **Industrial IoT Digital Twin** for motor health monitoring using a 4-layer edge-to-cloud architecture. It follows the CO326 Course Project specification for Industrial Digital Twin & Cyber-Physical Security.
 
-**Industrial Problem:** Detect early-stage motor bearing failure, imbalance, or abnormal behavior using edge-level anomaly detection and cloud-based RUL estimation.
+**Industrial Problem:** Detect motor overheating, thermal runaway, and cooling failure using edge-level temperature monitoring and cloud-based thermal trend analysis.
 
 **Stack:**
 | Layer | Technology |
 |---|---|
-| Edge Device | ESP32-S3 (firmware — pending) |
+| Edge Data Source (current) | Python mock temperature publisher |
+| Edge Device (future) | ESP32-S3 firmware (deferred) |
 | Message Broker | Eclipse Mosquitto (MQTT + Sparkplug B) |
 | Flow Logic | Node-RED |
 | Historian | InfluxDB 2.7 |
@@ -28,7 +29,7 @@ This project implements an **Industrial IoT Digital Twin** for motor health moni
   - MQTT In → JSON Parse → Alarm Logic (Function) → InfluxDB Write + Debug
 - ✅ InfluxDB `motor_health` bucket initialized and receiving data
 - ✅ Grafana connected to InfluxDB via auto-provisioned data source
-- ✅ Grafana dashboard exported and committed — `Motor Health Dashboard` with live RMS panel
+- ✅ Grafana dashboard exported and committed — `Motor Thermal Health Dashboard` with temperature-centric panels
 - ✅ End-to-end pipeline tested with mock MQTT data
 - ✅ `.env.example` created — secrets shared separately via WhatsApp
 - ✅ Node-RED flow exported to `nodered/flows.json`
@@ -51,8 +52,8 @@ e20-co326-Motor-Health-Monitoring-Digital-Twin-with-Edge-Anomaly-Detection/
 ├── nodered/
 │   └── flows.json                      ← Node-RED flow export (import this)
 ├── firmware/
-│   ├── src/                            ← ESP32 Arduino/PlatformIO source (pending)
-│   └── include/                        ← Header files (pending)
+│   ├── src/                            ← Reserved for future ESP32 firmware phase
+│   └── include/                        ← Reserved for future ESP32 firmware phase
 ├── grafana/
 │   ├── dashboards/
 │   │   └── motor-health-dashboard.json ← Grafana dashboard export (auto-loaded)
@@ -184,7 +185,7 @@ python3 docker/mock_publisher.py
 
 Then check:
 - Node-RED debug panel shows incoming messages with `alarm_state` field
-- InfluxDB Data Explorer → `motor_health` → `motor_features` → `rms` shows values
+- InfluxDB Data Explorer → `motor_health` → `motor_thermal` → `temperature` shows values
 - Grafana Motor Health Dashboard shows live graph updating
 
 ---
@@ -208,8 +209,8 @@ factoryA/
 └── area1/
     └── motor01/
         ├── telemetry/
-        │   ├── raw             ← Raw sensor values (ESP32)
-        │   ├── features        ← Extracted features + anomaly score
+        │   ├── raw             ← Raw temperature readings (ESP32)
+        │   ├── features        ← Thermal features + anomaly score
         │   └── anomaly         ← Anomaly flag and score only
         ├── state/
         │   ├── device          ← Heartbeat, WiFi, uptime
@@ -235,10 +236,11 @@ All telemetry messages on `telemetry/features` use this JSON structure:
 {
   "ts": 1712566800,
   "motor_id": "motor01",
-  "rms": 0.42,
-  "peak": 0.71,
-  "variance": 0.03,
-  "anomaly_score": 0.12,
+  "temperature": 42.5,
+  "temp_rate": 0.3,
+  "temp_baseline": 35.0,
+  "temp_delta": 7.5,
+  "anomaly_score": 0.25,
   "anomaly_flag": 0,
   "relay_state": 1,
   "mode": "live",
@@ -250,11 +252,12 @@ All telemetry messages on `telemetry/features` use this JSON structure:
 |---|---|---|
 | `ts` | int | Unix timestamp (seconds) |
 | `motor_id` | string | Device identifier |
-| `rms` | float | Root mean square of sensor signal |
-| `peak` | float | Peak signal value in window |
-| `variance` | float | Signal variance in window |
-| `anomaly_score` | float | 0.0 (normal) to 1.0 (critical) |
-| `anomaly_flag` | int | 0 = normal, 1 = anomaly detected |
+| `temperature` | float | Current motor surface temperature (C) |
+| `temp_rate` | float | Rate of change (C per second) |
+| `temp_baseline` | float | Rolling baseline temperature |
+| `temp_delta` | float | Difference from baseline temperature |
+| `anomaly_score` | float | 0.0 (normal) to 1.0 (critical) from thermal indicators |
+| `anomaly_flag` | int | 0 = normal, 1 = anomaly threshold exceeded |
 | `relay_state` | int | 0 = open, 1 = closed |
 | `mode` | string | `live` or `simulation` |
 | `wifi_rssi` | int | WiFi signal strength (dBm) |
@@ -268,10 +271,10 @@ The current flow (`nodered/flows.json`) implements:
 1. **MQTT In** — subscribes to `factoryA/area1/motor01/telemetry/features`
 2. **JSON Parse** — converts raw MQTT string payload to JavaScript object
 3. **Alarm Logic** (Function node) — adds `alarm_state` field:
-   - `anomaly_flag === 1` → `"ALARM"`
-   - `anomaly_score > 0.5` → `"WARNING"`
+  - `temperature >= 80` or `anomaly_flag === 1` → `"ALARM"`
+  - `temperature >= 65` or `temp_rate >= 0.5` → `"WARNING"`
    - Otherwise → `"NORMAL"`
-4. **InfluxDB Out** — writes to `motor_features` measurement in `motor_health` bucket
+4. **InfluxDB Out** — writes to `motor_thermal` measurement in `motor_health` bucket
 5. **Debug** — prints all messages to the Node-RED debug panel
 
 > **After every change to the Node-RED flow:** Export it immediately via hamburger menu → Export → All Flows → Download, then copy to `nodered/flows.json` and commit.
@@ -283,14 +286,16 @@ The current flow (`nodered/flows.json`) implements:
 The dashboard (`grafana/dashboards/motor-health-dashboard.json`) is auto-loaded on startup.
 
 Current panels:
-- ✅ Live RMS time-series graph
+- ✅ Live Temperature (Gauge, 0-100 C)
+- ✅ Temperature Trend (Time series)
+- ✅ Rate of Change (Time series)
+- ✅ Temp Delta from Baseline (Stat)
+- ✅ Anomaly Score (Gauge, 0-1)
+- ✅ Alarm State (State timeline)
+- ✅ Relay State (Stat)
 
 Planned panels (Member 3):
-- Anomaly score gauge
-- Alarm state indicator
-- Relay state panel
 - Device heartbeat panel
-- Historical trend panel
 - RUL estimate panel
 - Relay control button (bidirectional twin control)
 
@@ -329,16 +334,9 @@ Docker named volumes store all data:
 
 ## What Needs to Be Done Next
 
-### Member 1 — ESP32-S3 Firmware
-- [ ] Set up PlatformIO project in `firmware/`
-- [ ] Implement Wi-Fi connect and reconnect logic
-- [ ] Implement MQTT connect, reconnect, and Last Will & Testament
-- [ ] Read sensor (vibration or current)
-- [ ] Compute features: RMS, peak, variance
-- [ ] Implement edge anomaly detection (threshold or z-score)
-- [ ] Publish telemetry to `factoryA/area1/motor01/telemetry/features`
-- [ ] Subscribe to `factoryA/area1/motor01/cmd/relay` for control commands
-- [ ] Drive relay output based on command
+### Firmware Scope (Deferred)
+- [ ] ESP32 firmware implementation is intentionally deferred
+- [ ] Current integration and validation uses `docker/mock_publisher.py`
 
 ### Member 2 — Node-RED + MQTT
 - [ ] Add heartbeat/LWT topic subscription and processing
@@ -368,15 +366,14 @@ Docker named volumes store all data:
 flowchart LR
     subgraph L1["Layer 1 - Physical"]
         Motor["Induction Motor"]
-        Sensor["Vibration/Current Sensor"]
+    Sensor["Temperature Sensor"]
         Relay["Relay Actuator"]
     end
 
     subgraph L2["Layer 2 - Edge"]
-        ESP["ESP32-S3
-        Acquire + Features
-        Anomaly Detection
-        MQTT Client + LWT"]
+      ESP["Mock Temperature Publisher (Python)
+      Thermal Feature Simulation
+      MQTT Client"]
     end
 
     subgraph L3["Layer 3 - Integration"]
@@ -444,7 +441,7 @@ flowchart LR
 | Janith | Infrastructure, Docker, MQTT, Node-RED, InfluxDB, Grafana setup |
 | Member 2 | Node-RED flows, MQTT topic design, RUL logic |
 | Member 3 | Grafana dashboard, Digital Twin UI |
-| Member 4 | ESP32 firmware, sensor, relay, wiring |
+| Member 4 | Firmware and hardware integration (deferred phase) |
 
 ---
 
