@@ -448,58 +448,99 @@
     /* ── TEAM ── */
     .team-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
       margin-top: 2rem;
     }
 
-    .team-card {
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1.5rem;
-      background: var(--surface);
-      transition: border-color .25s;
+    @media (max-width: 700px) {
+      .team-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    .team-card:hover { border-color: var(--accent); }
+    @media (max-width: 420px) {
+      .team-grid { grid-template-columns: 1fr; }
+    }
 
-    .team-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
+    .team-card {
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    /* portrait image fills the card */
+    .team-photo {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      object-position: center 15%;
+      display: block;
+      filter: grayscale(30%) brightness(.85);
+      transition: filter .4s, transform .4s;
+    }
+    .team-card:hover .team-photo {
+      filter: grayscale(0%) brightness(1);
+      transform: scale(1.03);
+    }
+
+    /* gradient overlay at bottom */
+    .team-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(0,0,0,.92) 0%,
+        rgba(0,0,0,.55) 38%,
+        transparent 65%
+      );
+      pointer-events: none;
+    }
+
+    /* text sits above gradient */
+    .team-info {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 1.2rem 1rem 1rem;
+      z-index: 2;
     }
 
     .team-name {
       font-weight: 700;
-      font-size: .95rem;
+      font-size: 1rem;
       margin-bottom: .2rem;
+      line-height: 1.2;
     }
 
     .team-index {
       font-family: var(--mono);
-      font-size: .7rem;
+      font-size: .68rem;
       color: var(--accent);
-      margin-bottom: .8rem;
+      margin-bottom: .7rem;
     }
 
     .team-tags {
       display: flex;
       flex-wrap: wrap;
       gap: .3rem;
+      /* hidden by default, slide up on hover */
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease;
     }
+    .team-card:hover .team-tags { max-height: 6rem; }
 
     .team-tag {
       font-family: var(--mono);
-      font-size: .6rem;
+      font-size: .58rem;
       padding: .15rem .45rem;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,.15);
       border-radius: 2px;
-      color: var(--muted);
+      color: rgba(255,255,255,.6);
+      backdrop-filter: blur(4px);
     }
 
     /* ── LEAD TIME HIGHLIGHT ── */
@@ -974,56 +1015,60 @@
     <p>Department of Computer Engineering · University of Peradeniya · CO326, 2026</p>
 
     <div class="team-grid">
+
       <div class="team-card">
-        <div class="team-avatar">
-          <img src="https://github.com/haritha037.png" alt="Haritha Bandara" />
-        </div>
-        <div class="team-name">Haritha Bandara</div>
-        <div class="team-index">E/20/037</div>
-        <div class="team-tags">
-          <span class="team-tag">Architecture</span>
-          <span class="team-tag">edge_ai.py</span>
-          <span class="team-tag">Fan hysteresis</span>
-          <span class="team-tag">Cloud SCADA</span>
+        <img class="team-photo" src="assets/team/haritha.jpg" alt="Haritha Bandara" />
+        <div class="team-info">
+          <div class="team-name">Haritha Bandara</div>
+          <div class="team-index">E/20/037</div>
+          <div class="team-tags">
+            <span class="team-tag">Architecture</span>
+            <span class="team-tag">edge_ai.py</span>
+            <span class="team-tag">Fan hysteresis</span>
+            <span class="team-tag">Cloud SCADA</span>
+          </div>
         </div>
       </div>
+
       <div class="team-card">
-        <div class="team-avatar">
-          <img src="https://github.com/Yohansenanayake.png" alt="Yohan Senanayake" />
-        </div>
-        <div class="team-name">Yohan Senanayake</div>
-        <div class="team-index">E/20/363</div>
-        <div class="team-tags">
-          <span class="team-tag">ML algorithms</span>
-          <span class="team-tag">Feature engineering</span>
-          <span class="team-tag">Isolation Forest</span>
-          <span class="team-tag">Random Forest</span>
+        <img class="team-photo" src="assets/team/yohan.jpg" alt="Yohan Senanayake" />
+        <div class="team-info">
+          <div class="team-name">Yohan Senanayake</div>
+          <div class="team-index">E/20/363</div>
+          <div class="team-tags">
+            <span class="team-tag">ML algorithms</span>
+            <span class="team-tag">Feature engineering</span>
+            <span class="team-tag">Isolation Forest</span>
+            <span class="team-tag">Random Forest</span>
+          </div>
         </div>
       </div>
+
       <div class="team-card">
-        <div class="team-avatar">
-          <img src="https://github.com/chamodi2.png" alt="Chamodi Senarathne" />
-        </div>
-        <div class="team-name">Chamodi Senarathne</div>
-        <div class="team-index">E/20/365</div>
-        <div class="team-tags">
-          <span class="team-tag">LSTM</span>
-          <span class="team-tag">Predictive service</span>
-          <span class="team-tag">InfluxDB</span>
-          <span class="team-tag">Grafana</span>
+        <img class="team-photo" src="assets/team/chamodi.jpg" alt="Chamodi Senarathne" />
+        <div class="team-info">
+          <div class="team-name">Chamodi Senarathne</div>
+          <div class="team-index">E/20/365</div>
+          <div class="team-tags">
+            <span class="team-tag">LSTM</span>
+            <span class="team-tag">Predictive service</span>
+            <span class="team-tag">InfluxDB</span>
+            <span class="team-tag">Grafana</span>
+          </div>
         </div>
       </div>
+
       <div class="team-card">
-        <div class="team-avatar">
-          <img src="https://github.com/janithkw.png" alt="Janith Wanasinghe" />
-        </div>
-        <div class="team-name">Janith Wanasinghe</div>
-        <div class="team-index">E/20/420</div>
-        <div class="team-tags">
-          <span class="team-tag">Docker Compose</span>
-          <span class="team-tag">Hardware (ESP32)</span>
-          <span class="team-tag">InfluxDB routing</span>
-          <span class="team-tag">Provisioning</span>
+        <img class="team-photo" src="assets/team/janith.jpg" alt="Janith Wanasinghe" />
+        <div class="team-info">
+          <div class="team-name">Janith Wanasinghe</div>
+          <div class="team-index">E/20/420</div>
+          <div class="team-tags">
+            <span class="team-tag">Docker Compose</span>
+            <span class="team-tag">Hardware (ESP32)</span>
+            <span class="team-tag">InfluxDB routing</span>
+            <span class="team-tag">Provisioning</span>
+          </div>
         </div>
       </div>
     </div>
